@@ -222,11 +222,6 @@ def cal_JCT_throughput(job, network, job_assigned):
 
 	job_throughput = round(1/max(max_comp_time, max_trans_time), 2)
 
-	# if job_assigned[0] == job.nodes[0]['Source']:
-	# 	init_trans_time = 0
-	# else:
-	# 	init_trans_time = 
-
 
 	return job_completion_time, job_throughput
 
@@ -234,25 +229,31 @@ def cal_JCT_throughput(job, network, job_assigned):
 def task_allocation_no_routing_bandwidth_2(job, network):
 	'''
 	Just use the first phase of the proposed solution
+
+	for each task, find the edge node with the qualified resources;
+	Within those nodes, find the node where the task can run most fast;
+	return the task allocation strategies 
 	'''
 	job_assigned = []
 	for task in list(nx.bfs_tree(job, 0)): # schedule the task in a layered order
-		if task == 0:
-			target_node = job.nodes['Source']['source']
-			network.nodes[target_node]['resource'] = network.nodes[target_node]['resource'] - job.nodes[task]['request_resource']
-			job_assigned.append(target_node)
-			continue
+		# if task == 0:
+		# 	target_node = job.nodes['Source']['source']
+		# 	network.nodes[target_node]['resource'] = network.nodes[target_node]['resource'] - job.nodes[task]['request_resource']
+		# 	job_assigned.append(target_node)
+		# 	continue
+		
 		trans_and_comp_dict = {}
 		for node in network.nodes():
-			trans_and_comp = maximum_trans_and_comp_time(job, task, network, node, job_assigned)
-			if trans_and_comp:
-				trans_and_comp_dict[node] = trans_and_comp
-			else:
+			# select those nodes with qualified resources first
+			if job.nodes[task]['request_resource'] >= network.nodes[node]['resource']:
 				continue
+			trans_and_comp = maximum_trans_and_comp_time(job, task, network, node, job_assigned)
+			trans_and_comp_dict[node] = trans_and_comp
+
 		if trans_and_comp_dict:
 			target_node = min(trans_and_comp_dict, key=trans_and_comp_dict.get)
 			#update the processing power of edge node
-			network.nodes[target_node]['PS'] = network.nodes[target_node]['PS'] - job.nodes[task]['CL']
+			network.nodes[target_node]['resource'] = network.nodes[target_node]['resource'] - job.nodes[task]['request_resource']
 
 			job_assigned.append(target_node)
 
@@ -342,33 +343,33 @@ def test():
 
 if __name__ == '__main__':
 	network, job = test()
-	# baseline 1
-	results = least_request_priority(job, network)
-	if results:
-		print("Baseline 1:")
-		print("Target Node: ", results[0])
-		print("Job Completion Time: ", results[1])
-		print("Throughput: ", results[2])
-	# baseline 2
-	network, job = test()
-	results = balanced_resource_allocation(job, network)
-	if results:
-		print("Baseline 2:")
-		print("Target Node: ", results[0])
-		print("Job Completion Time: ", results[1])
-		print("Throughput: ", results[2])
-	# baseline 3
-	network, job = test()
-	results = task_allocation_no_routing_bandwidth_1(job, network)
-	if results:
-		print("Baseline 3:")
-		print("Job Assigned: ", results[0])
-		print("Job Completion Time: ", results[1])
-		print("Throughput: ", results[2])
-	# baseline 4
-	# results = task_allocation_no_routing_bandwidth_2(job, network)
+	# # baseline 1
+	# results = least_request_priority(job, network)
 	# if results:
-	# 	print("Baseline 4:")
+	# 	print("Baseline 1:")
+	# 	print("Target Node: ", results[0])
+	# 	print("Job Completion Time: ", results[1])
+	# 	print("Throughput: ", results[2])
+	# # baseline 2
+	# network, job = test()
+	# results = balanced_resource_allocation(job, network)
+	# if results:
+	# 	print("Baseline 2:")
+	# 	print("Target Node: ", results[0])
+	# 	print("Job Completion Time: ", results[1])
+	# 	print("Throughput: ", results[2])
+	# # baseline 3
+	# network, job = test()
+	# results = task_allocation_no_routing_bandwidth_1(job, network)
+	# if results:
+	# 	print("Baseline 3:")
 	# 	print("Job Assigned: ", results[0])
 	# 	print("Job Completion Time: ", results[1])
 	# 	print("Throughput: ", results[2])
+	# baseline 4
+	results = task_allocation_no_routing_bandwidth_2(job, network)
+	if results:
+		print("Baseline 4:")
+		print("Job Assigned: ", results[0])
+		print("Job Completion Time: ", results[1])
+		print("Throughput: ", results[2])

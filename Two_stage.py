@@ -9,15 +9,20 @@ import networkx as nx
 from cvxopt import matrix, solvers
 import matplotlib.pyplot as plt
 
+
 def maximum_trans_and_comp_time (G, task, network, node, job_assigned):
 	predecessors = list(G.predecessors(task))
 	trans_time_list = []
 	for predecessor in predecessors:
 		data_size = G.edges[predecessor, task]['weight']
-		if job_assigned[predecessor] != node:
+		if predecessor == 'Source':
+			source_node = G.nodes[predecessor]['source']
+		else:
+			source_node = job_assigned[predecessor]
+		if source_node != node:
 			# use the average bandwidth of all the routing paths
 			# bandwidth = nx.dijkstra_path_length(network, source=job_assigned[predecessor], target=node)
-			routing_paths = list(nx.all_simple_edge_paths(network, source=job_assigned[predecessor], target=node))
+			routing_paths = list(nx.all_simple_edge_paths(network, source=source_node, target=node))
 			routing_bandwidths = []
 			for routing_path in routing_paths:
 				bandwidths = []
@@ -34,14 +39,15 @@ def maximum_trans_and_comp_time (G, task, network, node, job_assigned):
 			trans_time = 0
 		trans_time_list.append(trans_time)
 
-	trans = max(trans_time_list)
-
-	if G.nodes[task]['CL'] > network.nodes[node]['PS']:
-		return False
+	if trans_time_list:
+		trans = max(trans_time_list)
 	else:
-		comp = G.nodes[task]['CL'] / network.nodes[node]['PS']
+		trans = 0
 
-		return trans + comp
+	
+	comp = G.nodes[task]['CL'] / network.nodes[node]['PS']
+
+	return trans + comp
 
 
 def task_allocation(job, network):
@@ -53,46 +59,54 @@ def task_allocation(job, network):
 		average_ps -> float: the average computation power of the edge ndoes
 	Output: the task allocation strategies
 	'''
-	# sorted_id = sorted(range(len(arrive_time)), key=lambda k: arrive_time[k], reverse=False)
-	
-	# for index in sorted_id:
-	# 	job = jobs[index] # determine the job to be executed
-	# 	job_assigned = []
-	# 	for task in list(nx.bfs_tree(job, 'Start')): # schedule the task in a layered order
-	# 		if task == 'Start':
-	# 			job_assigned.append(job.nodes[task]['Source'])
-	# 			continue
-	# 		trans_and_comp_dict = {}
-	# 		for node in network.nodes():
-	# 			trans_and_comp = maximum_trans_and_comp_time(G, task, network, node, job_assigned)
+	# job_assigned = []
+	# for task in list(nx.bfs_tree(job, 0)): # schedule the task in a layered order
+	# 	if task == 0:
+	# 		target_node = job.nodes[task]['Source']
+	# 		network.nodes[target_node]['PS'] = network.nodes[target_node]['PS'] - job.nodes[task]['CL']
+	# 		job_assigned.append(target_node)
+	# 		continue
+	# 	trans_and_comp_dict = {}
+	# 	for node in network.nodes():
+	# 		trans_and_comp = maximum_trans_and_comp_time(job, task, network, node, job_assigned)
+	# 		if trans_and_comp:
 	# 			trans_and_comp_dict[node] = trans_and_comp
-
+	# 		else:
+	# 			continue
+	# 	if trans_and_comp_dict:
 	# 		target_node = min(trans_and_comp_dict, key=trans_and_comp_dict.get)
 	# 		#update the processing power of edge node
-	# 		network.nodes[target_node]['PS'] = network.nodes[target_node]['PS'] - G.nodes[task]['CL']
+	# 		network.nodes[target_node]['PS'] = network.nodes[target_node]['PS'] - job.nodes[task]['CL']
 
 	# 		job_assigned.append(target_node)
 
+	# 	else:
+	# 		print("this job fail to be scheduled")
+	# 		return False   # this job cannot be scheduled to the edge nodes
 
-	# return jobs_assigned
+	# print(job_assigned)
+	# return job_assigned
+
 	job_assigned = []
 	for task in list(nx.bfs_tree(job, 0)): # schedule the task in a layered order
-		if task == 0:
-			target_node = job.nodes[task]['Source']
-			network.nodes[target_node]['PS'] = network.nodes[target_node]['PS'] - job.nodes[task]['CL']
-			job_assigned.append(target_node)
-			continue
+		# if task == 0:
+		# 	target_node = job.nodes['Source']['source']
+		# 	network.nodes[target_node]['resource'] = network.nodes[target_node]['resource'] - job.nodes[task]['request_resource']
+		# 	job_assigned.append(target_node)
+		# 	continue
+		
 		trans_and_comp_dict = {}
 		for node in network.nodes():
-			trans_and_comp = maximum_trans_and_comp_time(job, task, network, node, job_assigned)
-			if trans_and_comp:
-				trans_and_comp_dict[node] = trans_and_comp
-			else:
+			# select those nodes with qualified resources first
+			if job.nodes[task]['request_resource'] >= network.nodes[node]['resource']:
 				continue
+			trans_and_comp = maximum_trans_and_comp_time(job, task, network, node, job_assigned)
+			trans_and_comp_dict[node] = trans_and_comp
+
 		if trans_and_comp_dict:
 			target_node = min(trans_and_comp_dict, key=trans_and_comp_dict.get)
 			#update the processing power of edge node
-			network.nodes[target_node]['PS'] = network.nodes[target_node]['PS'] - job.nodes[task]['CL']
+			network.nodes[target_node]['resource'] = network.nodes[target_node]['resource'] - job.nodes[task]['request_resource']
 
 			job_assigned.append(target_node)
 
@@ -142,21 +156,20 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 		dest_node = job_assigned[i]
 		predecessors = list(job.predecessors(task))
 		for predecessor in predecessors:
-			if predecessor == 0:
-				index = 0
-				source_node = job_assigned[index]
+			if predecessor == 'Source':
+				source_node = job.nodes[predecessor]['source']
 			else:
-				index = predecessor
-				source_node = job_assigned[index]
+				source_node = job_assigned[predecessor]
 
 			if dest_node != source_node:
 				datasize = job.edges[predecessor, task]['weight']
 				routing_paths = list(nx.all_simple_edge_paths(network, source=source_node, target=dest_node))
 				# [[(0, 1), (1, 2), (2, 3)], [(0, 1), (1, 3)], [(0, 2), (2, 1), (1, 3)], [(0, 2), (2, 3)], [(0, 3)]]
 				all_routing_paths.append(routing_paths)
-				flow = (source_node, dest_node, datasize, routing_paths)
+				flow = (source_node, dest_node, datasize, routing_paths, predecessor, task)
 				flows.append(flow)
 	
+	# print(flows)
 	Q = len(flows)
 	K = 0
 	edges = []
@@ -213,7 +226,6 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 	h = matrix(h_temp)
 
 
-
 	# A
 	A_rows = Q
 	A_columns = Q + K + 1
@@ -221,10 +233,10 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 	
 	counter = 0
 	for i in range(A_rows):
-		for j in range(len(flows[i])):
+		for j in range(len(flows[i][3])):
 			A_temp[i][counter+j] = 1.
 
-		counter = counter + len(flows[i])
+		counter = counter + len(flows[i][3])
 		A_temp[i][K+i] = -1.
 
 	A_temp_transpose = list(map(list, zip(*A_temp)))
@@ -289,58 +301,57 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 
 	print("the maximum trans_time is ", max(trans_times))
 
+	# calculate the JCT and throughput
+	sum_comp_time = 0
+	for i, node in enumerate(job_assigned):
+		temp_comp_time = job.nodes[i]['CL'] / network.nodes[node]['PS']
+		sum_comp_time = sum_comp_time + temp_comp_time
+
+	job_completion_time = sum(trans_times) + sum_comp_time
+
+
+	job_copy = job.to_undirected()
+	for flow in flows:
+		job_copy.remove_edge(flow[4], flow[5])
+
+	job_copy.remove_node('Source')
+
+	components_time = []
+	for subgraph in nx.connected_components(job_copy):
+		nodeSet = job_copy.subgraph(subgraph).nodes()
+		sum_comp_time = 0
+		for task in nodeSet:
+			temp_comp_time = job.nodes[task]['CL'] / network.nodes[job_assigned[task]]['PS']
+			sum_comp_time = sum_comp_time + temp_comp_time
+		components_time.append(sum_comp_time)
+
+	if trans_times:
+		max_trans_time = max(trans_times)
+	else:
+		max_trans_time = 0
+	max_comp_time = max(components_time)
+
+	job_throughput = round(1/max(max_comp_time, max_trans_time), 2)
+
 
 	# update the remaining computation and network resources
-	for i in range(len(routing_bandwidth_solutions)):
-		for (edge, bandwidth) in routing_bandwidth_solutions[i]:
-			network.edges[edge[0], edge[1]]['weight'] = network.edges[edge[0], edge[1]]['weight'] - bandwidth
+	# for i in range(len(routing_bandwidth_solutions)):
+	# 	for (edge, bandwidth) in routing_bandwidth_solutions[i]:
+	# 		network.edges[edge[0], edge[1]]['weight'] = network.edges[edge[0], edge[1]]['weight'] - bandwidth
 
-	pos = nx.spring_layout(network)
-	nx.draw(network, pos, with_labels=True)
+	# pos = nx.spring_layout(network)
+	# nx.draw(network, pos, with_labels=True)
 
-	edge_labels = nx.get_edge_attributes(network, 'weight')
-	nx.draw_networkx_edge_labels(network, pos, edge_labels = edge_labels)
+	# edge_labels = nx.get_edge_attributes(network, 'weight')
+	# nx.draw_networkx_edge_labels(network, pos, edge_labels = edge_labels)
 
-	plt.show()
+	# plt.show()
+
+	return job_completion_time, job_throughput
 
 
 def test():
 	######################### Test Function joint_bandwidth_and_routing #################################
-	# generate network
-	# links = [('A', 'B', 10), ('B', 'F', 20), ('F', 'D', 50), ('D', 'C', 15), ('C', 'A', 5), ('B', 'E', 7), ('E', 'D', 4)]
-	# G = nx.Graph()
-	# G.add_weighted_edges_from(links)
-
-	# pos = nx.spring_layout(G)
-	# nx.draw(G, pos, with_labels=True)
-
-	# edge_labels = nx.get_edge_attributes(G, 'weight')
-	# nx.draw_networkx_edge_labels(G, pos, edge_labels = edge_labels)
-
-	# plt.show()
-
-	# # generate application
-	
-	# app_links = [(0, 1, 50), (0, 2, 100), (2, 3, 30), (3, 4, 10)]
-	# app = nx.DiGraph()
-	# app.add_weighted_edges_from(app_links)
-
-	# pos = nx.spring_layout(app)
-	# nx.draw(app, pos, with_labels=True)
-
-	# edge_labels = nx.get_edge_attributes(app, 'weight')
-	# nx.draw_networkx_edge_labels(app, pos, edge_labels = edge_labels)
-
-	# plt.show()
-
-	# # set the task allocation strategies
-	# task_list = list(nx.bfs_tree(app, 0))
-	# # print(task_list)  [0, 1, 2, 3, 4]
-	# job_assigned = ['A', 'E', 'F', 'D', 'D']
-
-	# return G, app, job_assigned
-
-
 	links = [('A', 'B', 10), ('B', 'F', 20), ('F', 'D', 50), ('D', 'C', 15), ('C', 'A', 5), ('B', 'E', 7), ('E', 'D', 4)]
 	G = nx.Graph()
 	G.add_weighted_edges_from(links)
@@ -351,7 +362,24 @@ def test():
 	G.nodes['C']['PS'] = 200
 	G.nodes['D']['PS'] = 150
 	G.nodes['E']['PS'] = 30
-	G.nodes['F']['PS'] = 300
+	G.nodes['F']['PS'] = 100
+
+	# add current resource
+	G.nodes['A']['resource'] = 8
+	G.nodes['B']['resource'] = 4
+	G.nodes['C']['resource'] = 2
+	G.nodes['D']['resource'] = 2
+	G.nodes['E']['resource'] = 6
+	G.nodes['F']['resource'] = 12
+
+	# add max_resource
+	G.nodes['A']['max_resource'] = 16
+	G.nodes['B']['max_resource'] = 8
+	G.nodes['C']['max_resource'] = 4
+	G.nodes['D']['max_resource'] = 8
+	G.nodes['E']['max_resource'] = 12
+	G.nodes['F']['max_resource'] = 20
+
 
 	pos = nx.spring_layout(G)
 	nx.draw(G, pos, with_labels=True)
@@ -359,15 +387,18 @@ def test():
 	edge_labels = nx.get_edge_attributes(G, 'weight')
 	nx.draw_networkx_edge_labels(G, pos, edge_labels = edge_labels)
 
-	plt.show()
+	# plt.show()
 
 	# generate application
 	
-	app_links = [(0, 1, 50), (0, 2, 100), (2, 3, 30), (3, 4, 10)]
+	app_links = [('Source', 0, 150), (0, 1, 50), (0, 2, 100), (2, 3, 30), (3, 4, 10)]
 	app = nx.DiGraph()
 	app.add_weighted_edges_from(app_links)
 
-	app.nodes[0]['Source'] = 'A'
+	app.nodes['Source']['source'] = 'A'
+	app.nodes[0]['total_request_resource'] = 8
+	app.nodes[0]['total_workload'] = 500
+	app.nodes[0]['Source_datasize'] = 150
 	# add computation workload
 	app.nodes[0]['CL'] = 50
 	app.nodes[1]['CL'] = 150
@@ -375,13 +406,20 @@ def test():
 	app.nodes[3]['CL'] = 90
 	app.nodes[4]['CL'] = 100
 
+	# add request_resource
+	app.nodes[0]['request_resource'] = 2
+	app.nodes[1]['request_resource'] = 4
+	app.nodes[2]['request_resource'] = 6
+	app.nodes[3]['request_resource'] = 3
+	app.nodes[4]['request_resource'] = 3
+
 	pos = nx.spring_layout(app)
 	nx.draw(app, pos, with_labels=True)
 
 	edge_labels = nx.get_edge_attributes(app, 'weight')
 	nx.draw_networkx_edge_labels(app, pos, edge_labels = edge_labels)
 
-	plt.show()
+	# plt.show()
 
 	return G, app
 
@@ -390,8 +428,13 @@ def test():
 
 
 if __name__ == '__main__':
+	print("Proposed Solution:")
 	network, job = test()
 	job_assigned = task_allocation(job, network)
-	# network, job, job_assigned= test()
-	joint_bandwidth_and_routing(network, job_assigned, job)
+	if job_assigned:
+			print("Job Assigned: ", job_assigned)
+			# network, job, job_assigned= test()
+			results = joint_bandwidth_and_routing(network, job_assigned, job)
+			print("Job Completion Time: ", results[0])
+			print("Throughput: ", results[1])
 

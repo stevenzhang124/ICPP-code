@@ -1,5 +1,5 @@
 import numpy as np
-from DAGs_Generator import gen_application
+from DAGs import gen_application
 from Graph import gen_network
 import random
 import networkx as nx
