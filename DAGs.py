@@ -73,7 +73,7 @@ def generateWorflowMatrix(wf, h, w, n, dep_data, CL_avg, var):
 		G.edges[item[0], item[1]]['weight'] = dep_data_list[i]
 		
 
-	# init computation laod for each subtask
+	# init computation load for each subtask
 	CL = []
 	for i in range(n):
 		comp_load = round(CL_avg + (var*CL_avg)*np.random.randn(), 2)
@@ -82,6 +82,46 @@ def generateWorflowMatrix(wf, h, w, n, dep_data, CL_avg, var):
 	for i, node in enumerate(G.nodes()):
 		#print(i, node)
 		G.nodes[node]['CL'] = CL[i]
+
+	# init request resource of all sub_task  [2, 16]  40% 30% 20% 10%
+	task_16 = math.ceil(n * 0.1)
+	task_8 = math.ceil(n * 0.2)
+	task_4 = math.ceil(n * 0.3)
+	task_2 = n - task_16 - task_8 - task_4
+
+	list_tasks = list(G.nodes())
+	# print(type(list_tasks))
+	for i in range(len(list_tasks)):
+		if i < task_16:
+			task_id = random.choice(list_tasks)
+			list_tasks.remove(task_id)
+			G.nodes[task_id]['request_resource'] = 16
+		elif i < task_16 + task_8:
+			task_id = random.choice(list_tasks)
+			list_tasks.remove(task_id)
+			G.nodes[task_id]['request_resource'] = 8
+		elif i< task_16 + task_8 + task_4:
+			task_id = random.choice(list_tasks)
+			list_tasks.remove(task_id)
+			G.nodes[task_id]['request_resource'] = 4
+		else:
+			for task in list_tasks: 
+					G.nodes[task]['request_resource'] = 2
+
+	# add source node, it is a virtual node storing some meta information of the task
+	G.add_edge('Source', 0)
+	G.edges['Source', 0]['weight'] = 1.5*dep_data
+	G.nodes['Source']['source'] = random.randint(1, 19)  # select an edge node
+	G.nodes['Source']['total_request_resource'] = 64
+	G.nodes['Source']['total_workload'] = sum(dep_data_list)
+	G.nodes['Source']['Source_datasize'] = 1.5*dep_data
+
+	# check the nodes and their attributes
+	for node in G.nodes():
+		if node == 'Source':
+			print(node, G.nodes[node]['source'], G.nodes[node]['total_workload'], G.nodes[node]['total_request_resource'], G.nodes[node]['Source_datasize'])
+		else:
+			print(node, G.nodes[node]['CL'], G.nodes[node]['request_resource'])
 
 
 	pos = nx.spring_layout(G)

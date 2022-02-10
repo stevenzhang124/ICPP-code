@@ -7,6 +7,7 @@ baseline 4: task_allocation_no_routing_bandwidth_2
 
 still have to calcualte the job completion time
 '''
+import copy
 import networkx as nx
 import matplotlib.pyplot as plt
 from Two_stage import maximum_trans_and_comp_time
@@ -44,16 +45,18 @@ def least_request_priority(job, network):
 
 	target_node = max(node_avail_resource, key=node_avail_resource.get)
 
-	if job.nodes[0]["total_request_resource"] < node_avail_resource[target_node]:
-		network.nodes[target_node]['resource'] = network.nodes[target_node]['resource'] - job.nodes[0]["total_request_resource"]
+	if job.nodes['Source']["total_request_resource"] < node_avail_resource[target_node]:
+		network.nodes[target_node]['resource'] = network.nodes[target_node]['resource'] - job.nodes['Source']["total_request_resource"]
 		# calculate the job completion time
 		if target_node == job.nodes['Source']['source']:
 			trans_time = 0
 		else:
 			shorest_path_bandwidth, shorest_path = check_shorest_path(network, job.nodes['Source']['source'], target_node)
-			trans_time = job.nodes[0]['Source_datasize'] / shorest_path_bandwidth
+			print("the bandwidth is ", shorest_path_bandwidth)
+			print("the shorest path ", shorest_path)
+			trans_time = job.nodes['Source']['Source_datasize'] / shorest_path_bandwidth
 
-		comp_time = job.nodes[0]['total_workload'] / network.nodes[target_node]['PS']
+		comp_time = job.nodes['Source']['total_workload'] / network.nodes[target_node]['PS']
 		job_completion_time = comp_time + trans_time
 		job_throughput = round(1/max(comp_time, trans_time), 2)
 
@@ -67,8 +70,8 @@ def balanced_resource_allocation(job, network):
 
 	node_balance_ratio = {}
 	for node in network.nodes():
-		if job.nodes[0]['total_request_resource'] < network.nodes[node]['resource']: # select nodes with sufficient resources
-			node_balance_ratio[node] = (network.nodes[node]['resource'] - job.nodes[0]['total_request_resource']) / network.nodes[node]['max_resource']
+		if job.nodes['Source']['total_request_resource'] < network.nodes[node]['resource']: # select nodes with sufficient resources
+			node_balance_ratio[node] = (network.nodes[node]['resource'] - job.nodes['Source']['total_request_resource']) / network.nodes[node]['max_resource']
 	
 	if not node_balance_ratio:
 		print("this job fail to be scheduled")
@@ -80,9 +83,11 @@ def balanced_resource_allocation(job, network):
 			trans_time = 0
 	else:
 		shorest_path_bandwidth, shorest_path = check_shorest_path(network, job.nodes['Source']['source'], target_node)
-		trans_time = job.nodes[0]['Source_datasize'] / shorest_path_bandwidth
+		print("the bandwidth is ", shorest_path_bandwidth)
+		print("the shorest path ", shorest_path)
+		trans_time = job.nodes['Source']['Source_datasize'] / shorest_path_bandwidth
 
-	comp_time = job.nodes[0]['total_workload'] / network.nodes[target_node]['PS']
+	comp_time = job.nodes['Source']['total_workload'] / network.nodes[target_node]['PS']
 	
 	job_completion_time = comp_time + trans_time
 	job_throughput = round(1/max(comp_time, trans_time), 2)
@@ -314,9 +319,9 @@ def test():
 	app.add_weighted_edges_from(app_links)
 
 	app.nodes['Source']['source'] = 'A'
-	app.nodes[0]['total_request_resource'] = 8
-	app.nodes[0]['total_workload'] = 500
-	app.nodes[0]['Source_datasize'] = 150
+	app.nodes['Source']['total_request_resource'] = 8
+	app.nodes['Source']['total_workload'] = 590
+	app.nodes['Source']['Source_datasize'] = 150
 	# add computation workload
 	app.nodes[0]['CL'] = 50
 	app.nodes[1]['CL'] = 150
@@ -342,31 +347,32 @@ def test():
 	return G, app
 
 if __name__ == '__main__':
+	# baseline 1
 	network, job = test()
-	# # baseline 1
-	# results = least_request_priority(job, network)
-	# if results:
-	# 	print("Baseline 1:")
-	# 	print("Target Node: ", results[0])
-	# 	print("Job Completion Time: ", results[1])
-	# 	print("Throughput: ", results[2])
-	# # baseline 2
-	# network, job = test()
-	# results = balanced_resource_allocation(job, network)
-	# if results:
-	# 	print("Baseline 2:")
-	# 	print("Target Node: ", results[0])
-	# 	print("Job Completion Time: ", results[1])
-	# 	print("Throughput: ", results[2])
-	# # baseline 3
-	# network, job = test()
-	# results = task_allocation_no_routing_bandwidth_1(job, network)
-	# if results:
-	# 	print("Baseline 3:")
-	# 	print("Job Assigned: ", results[0])
-	# 	print("Job Completion Time: ", results[1])
-	# 	print("Throughput: ", results[2])
+	results = least_request_priority(job, network)
+	if results:
+		print("Baseline 1:")
+		print("Target Node: ", results[0])
+		print("Job Completion Time: ", results[1])
+		print("Throughput: ", results[2])
+	# baseline 2
+	network, job = test()
+	results = balanced_resource_allocation(job, network)
+	if results:
+		print("Baseline 2:")
+		print("Target Node: ", results[0])
+		print("Job Completion Time: ", results[1])
+		print("Throughput: ", results[2])
+	# baseline 3
+	network, job = test()
+	results = task_allocation_no_routing_bandwidth_1(job, network)
+	if results:
+		print("Baseline 3:")
+		print("Job Assigned: ", results[0])
+		print("Job Completion Time: ", results[1])
+		print("Throughput: ", results[2])
 	# baseline 4
+	network, job = test()
 	results = task_allocation_no_routing_bandwidth_2(job, network)
 	if results:
 		print("Baseline 4:")

@@ -95,41 +95,84 @@ this file records the learning of networkx
 # print(list(G.edges()))
 
 # 最大连通子图
-import networkx as nx
-import matplotlib.pyplot as plt
+# import networkx as nx
+# import matplotlib.pyplot as plt
 
-pointList = ['A','B','C','D','E','F','G']
-linkList = [('A','B'),('B','C'),('C','D'),('E','F'),('F','G'),]
-
-
-def subgraph():
-    G = nx.Graph()
-    # 转化为图结构
-    for node in pointList:
-        G.add_node(node)
-
-    for link in linkList:
-        G.add_edge(link[0], link[1])
-
-   # 画图
-    plt.subplot(211)
-    nx.draw_networkx(G, with_labels=True)
-    color =['y','g']
-    subplot = [223,224]
-    # 打印连通子图
-    for c in nx.connected_components(G):
-       # 得到不连通的子集
-        nodeSet = G.subgraph(c).nodes()
-        print(nodeSet)
-       # 绘制子图
-        subgraph = G.subgraph(c)
-        plt.subplot(subplot[0])  # 第二整行
-        nx.draw_networkx(subgraph, with_labels=True,node_color=color[0])
-        color.pop(0)
-        subplot.pop(0)
-
-    plt.show()
-
-subgraph()
+# pointList = ['A','B','C','D','E','F','G']
+# linkList = [('A','B'),('B','C'),('C','D'),('E','F'),('F','G'),]
 
 
+# def subgraph():
+#     G = nx.Graph()
+#     # 转化为图结构
+#     for node in pointList:
+#         G.add_node(node)
+
+#     for link in linkList:
+#         G.add_edge(link[0], link[1])
+
+#    # 画图
+#     plt.subplot(211)
+#     nx.draw_networkx(G, with_labels=True)
+#     color =['y','g']
+#     subplot = [223,224]
+#     # 打印连通子图
+#     for c in nx.connected_components(G):
+#        # 得到不连通的子集
+#         nodeSet = G.subgraph(c).nodes()
+#         print(nodeSet)
+#        # 绘制子图
+#         subgraph = G.subgraph(c)
+#         plt.subplot(subplot[0])  # 第二整行
+#         nx.draw_networkx(subgraph, with_labels=True,node_color=color[0])
+#         color.pop(0)
+#         subplot.pop(0)
+
+#     plt.show()
+
+# subgraph()
+
+
+import networkx as nx  #导入networkx包，命名为nx
+import matplotlib.pylab as plt #导入画图工具包，命名为plt
+import math
+import random
+# print('Number of node in ER rangom network is 30, The probability of connection is 0.2')#ER随机网络中的节点数为30.连接概率为0.2
+# NETWORK_SIZE = 20 #网络节点数为30
+# p = 0.2    #连接概率为0.2
+# G = nx.erdos_renyi_graph(n = NETWORK_SIZE, p = p)#用erdos_renyi_graph(n,p)方法生成一个含有n个节点、以概率p连接的ER随机图
+# ps = nx.spring_layout(G)
+# nx.draw(G,ps,width=0.6,node_size=10)#绘制边的宽度为0.6，节点尺寸为10的网络G图
+# # plt.savefig('fig.png',bbox_inches='tight') #将图像存为一个png格式的图片文件
+# plt.show() #在窗口中显示这幅图像
+# # nx.write_gexf(G, 'suiji_file.gexf')#此图写成.gexf格式
+
+G_temp = nx.random_graphs.random_regular_graph(3, 20)
+# edges_list = list(G_temp.edges())
+# print(edges_list)
+
+# print(G_temp.edges(1))
+num_remove = math.ceil(20*0.5)
+i = 0
+nodes_list = list(G_temp.nodes())
+select_nodes = []
+while i < num_remove:
+	select_node = random.choice(nodes_list)
+	select_nodes.append(select_node)
+	nodes_list.remove(select_node)
+	i = i + 1
+print(select_nodes)
+
+for node in select_nodes:
+	edges_list = list(G_temp.edges(node))
+	print(edges_list)
+	temp = len(edges_list)
+	print(temp)
+	if temp > 1:
+		G_temp.remove_edge(edges_list[-1][0], edges_list[-1][1])
+
+edges_list = list(G_temp.edges())
+print(edges_list)
+print(G_temp.number_of_nodes())
+nx.draw(G_temp,with_labels=True)
+plt.show() 

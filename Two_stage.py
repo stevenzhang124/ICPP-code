@@ -249,12 +249,13 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 
 	sol = solvers.lp(c, G, h, A, b)
 
-	print(sol['x'])	
-	print(sol['primal objective'])
+	# print(sol['x'])	
+	# print(sol['primal objective'])
 
-	print(list(sol['x']))
-	print([round(x, 2) for x in list(sol['x'])])
-	solution = [round(x, 2) for x in list(sol['x'])]
+	# print(list(sol['x']))
+	# print([round(x, 2) for x in list(sol['x'])])
+	# solution = [round(x, 2) for x in list(sol['x'])]
+	solution = [x for x in list(sol['x'])]
 
 	################## Finish Solve the Linear Programming Problem ####################################
 
@@ -396,9 +397,9 @@ def test():
 	app.add_weighted_edges_from(app_links)
 
 	app.nodes['Source']['source'] = 'A'
-	app.nodes[0]['total_request_resource'] = 8
-	app.nodes[0]['total_workload'] = 500
-	app.nodes[0]['Source_datasize'] = 150
+	app.nodes['Source']['total_request_resource'] = 8
+	app.nodes['Source']['total_workload'] = 590
+	app.nodes['Source']['Source_datasize'] = 150
 	# add computation workload
 	app.nodes[0]['CL'] = 50
 	app.nodes[1]['CL'] = 150
