@@ -51,30 +51,33 @@ def gen_network(noD, var, B_avg, PS_avg):
 	np.random.seed(0)
 	random.seed(0)
 
-	G = nx.random_graphs.random_regular_graph(3, noD)
-	num_remove = math.ceil(noD*0.2)
-	i = 0
-	nodes_list = list(G.nodes())
-	select_nodes = []
-	while i < num_remove:
-		select_node = random.choice(nodes_list)
-		select_nodes.append(select_node)
-		nodes_list.remove(select_node)
-		i = i + 1
-	# print(select_nodes)
+	Flag = True
+	while Flag:
+		G = nx.random_graphs.random_regular_graph(3, noD)
+		num_remove = math.ceil(noD*0.2)
+		i = 0
+		nodes_list = list(G.nodes())
+		select_nodes = []
+		while i < num_remove:
+			select_node = random.choice(nodes_list)
+			select_nodes.append(select_node)
+			nodes_list.remove(select_node)
+			i = i + 1
+		# print(select_nodes)
 
-	for node in select_nodes:
-		edges_list = list(G.edges(node))
-		# print(edges_list)
-		temp = len(edges_list)
-		# print(temp)
-		if temp > 1:
-			G.remove_edge(edges_list[-1][0], edges_list[-1][1])
+		for node in select_nodes:
+			edges_list = list(G.edges(node))
+			# print(edges_list)
+			temp = len(edges_list)
+			# print(temp)
+			if temp > 1:
+				G.remove_edge(edges_list[-1][0], edges_list[-1][1])
 
 
-	# check if the generated graph is all connected
-	if nx.is_connected(G):
-		print("The generated network is connected")
+		# check if the generated graph is all connected
+		if nx.is_connected(G):
+			print("The generated network is connected")
+			Flag = False
 
 
 	for i, item in enumerate(list(G.edges())):
