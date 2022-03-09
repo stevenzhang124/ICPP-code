@@ -290,7 +290,8 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 				if edge in routing_path_solutions[j] or (edge[1], edge[0]) in routing_path_solutions[j]:
 					total_datasize = total_datasize + flows[j][2]	
 			
-			bandwidth = round(flows[i][2] / total_datasize * network.edges[edge[0], edge[1]]['weight'], 2)
+			# bandwidth = round(flows[i][2] / total_datasize * network.edges[edge[0], edge[1]]['weight'], 2)
+			bandwidth = flows[i][2] / total_datasize * network.edges[edge[0], edge[1]]['weight']
 			bandwidths.append(bandwidth)
 			
 		min_bandwidth = min(bandwidths)
