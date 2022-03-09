@@ -52,8 +52,8 @@ def least_request_priority(job, network):
 			trans_time = 0
 		else:
 			shorest_path_bandwidth, shorest_path = check_shorest_path(network, job.nodes['Source']['source'], target_node)
-			print("the bandwidth is ", shorest_path_bandwidth)
-			print("the shorest path ", shorest_path)
+			# print("the bandwidth is ", shorest_path_bandwidth)
+			# print("the shorest path ", shorest_path)
 			trans_time = job.nodes['Source']['Source_datasize'] / shorest_path_bandwidth
 
 		comp_time = job.nodes['Source']['total_workload'] / network.nodes[target_node]['PS']
@@ -62,7 +62,7 @@ def least_request_priority(job, network):
 
 		return target_node, job_completion_time, job_throughput
 	else:
-		print("this job fail to be scheduled")
+		# print("this job fail to be scheduled")
 		return False
 
 
@@ -74,7 +74,7 @@ def balanced_resource_allocation(job, network):
 			node_balance_ratio[node] = (network.nodes[node]['resource'] - job.nodes['Source']['total_request_resource']) / network.nodes[node]['max_resource']
 	
 	if not node_balance_ratio:
-		print("this job fail to be scheduled")
+		# print("this job fail to be scheduled")
 		return False
 
 	target_node = max(node_balance_ratio, key=node_balance_ratio.get)
@@ -83,8 +83,8 @@ def balanced_resource_allocation(job, network):
 			trans_time = 0
 	else:
 		shorest_path_bandwidth, shorest_path = check_shorest_path(network, job.nodes['Source']['source'], target_node)
-		print("the bandwidth is ", shorest_path_bandwidth)
-		print("the shorest path ", shorest_path)
+		# print("the bandwidth is ", shorest_path_bandwidth)
+		# print("the shorest path ", shorest_path)
 		trans_time = job.nodes['Source']['Source_datasize'] / shorest_path_bandwidth
 
 	comp_time = job.nodes['Source']['total_workload'] / network.nodes[target_node]['PS']
@@ -115,7 +115,7 @@ def task_allocation_no_routing_bandwidth_1(job, network):
 				qualified_nodes[node] = network.nodes[node]['PS']
 
 		if not qualified_nodes:
-			print("this job fail to be scheduled")
+			# print("this job fail to be scheduled")
 			return False
 
 		target_node = max(qualified_nodes, key=qualified_nodes.get)
@@ -124,7 +124,7 @@ def task_allocation_no_routing_bandwidth_1(job, network):
 		# update the node avail resource
 		network.nodes[target_node]['resource'] = network.nodes[target_node]['resource'] - job.nodes[task]['request_resource']
 
-	print(job_assigned)
+	# print(job_assigned)
 	# calculate the job completion time
 	job_completion_time, job_throughput = cal_JCT_throughput(job, network, job_assigned)
 	
@@ -162,7 +162,7 @@ def cal_JCT_throughput(job, network, job_assigned):
 				# flow = (source_node, dest_node, datasize, shorest_path, source_task, dest_task)
 				flows.append(flow)
 				
-	print(flows)
+	# print(flows)
 	# calculate the transmission time of each flow
 	routing_bandwidth_solutions = []
 	trans_times = []
@@ -263,7 +263,7 @@ def task_allocation_no_routing_bandwidth_2(job, network):
 			job_assigned.append(target_node)
 
 		else:
-			print("this job fail to be scheduled")
+			# print("this job fail to be scheduled")
 			return False   # this job cannot be scheduled to the edge nodes
 
 	print(job_assigned)

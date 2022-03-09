@@ -72,6 +72,11 @@ def gen_network(noD, var, B_avg, PS_avg):
 			G.remove_edge(edges_list[-1][0], edges_list[-1][1])
 
 
+	# check if the generated graph is all connected
+	if nx.is_connected(G):
+		print("The generated network is connected")
+
+
 	for i, item in enumerate(list(G.edges())):
 		G.edges[item[0], item[1]]['weight'] = round(B_avg + (var*B_avg)*np.random.randn(), 2)
 
@@ -121,7 +126,7 @@ def gen_network(noD, var, B_avg, PS_avg):
 	edge_labels = nx.get_edge_attributes(G, 'weight')
 	nx.draw_networkx_edge_labels(G, pos, edge_labels = edge_labels)
 
-	plt.show()
+	# plt.show()
 
 
 	# return G, A
@@ -129,4 +134,4 @@ def gen_network(noD, var, B_avg, PS_avg):
 
 if __name__ == '__main__':
 	# G, A = gen_network(20, 0.2, 200, 500)
-	G = gen_network(20, 0.2, 200, 500)
+	G = gen_network(50, 0.2, 200, 500)

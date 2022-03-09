@@ -111,10 +111,10 @@ def task_allocation(job, network):
 			job_assigned.append(target_node)
 
 		else:
-			print("this job fail to be scheduled")
+			# print("this job fail to be scheduled")
 			return False   # this job cannot be scheduled to the edge nodes
 
-	print(job_assigned)
+	# print(job_assigned)
 	return job_assigned
 
 
@@ -151,8 +151,8 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 	flows = []
 	all_routing_paths = []
 	for i, task in enumerate(list(nx.bfs_tree(job, 0))):
-		if task == 0:
-			continue
+		# if task == 0:
+		# 	continue
 		dest_node = job_assigned[i]
 		predecessors = list(job.predecessors(task))
 		for predecessor in predecessors:
@@ -171,6 +171,12 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 	
 	# print(flows)
 	Q = len(flows)
+	if Q == 0:
+		print(" All task in node ", job.nodes['Source']['source'])
+		job_completion_time = job.nodes['Source']['total_workload'] / network.nodes[job.nodes['Source']['source']]['PS']
+		job_throughput = 1 / job_completion_time
+		return job_completion_time, job_throughput
+
 	K = 0
 	edges = []
 	# Find K and number of links involved
@@ -264,9 +270,10 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 	routing_path_solutions = []
 	for flow in flows:
 		# index_range = [ counter+i for i in range(len(flow[3])) ]
-		index = solution.index(max(solution[counter:(counter+len(flow[3]))]))
+		index = solution[counter:(counter+len(flow[3]))].index(max(solution[counter:(counter+len(flow[3]))])) + counter
+		# print(index-counter)
 		routing_path_solution = flow[3][index-counter]
-		print(routing_path_solution)
+		# print(routing_path_solution)
 		routing_path_solutions.append(routing_path_solution)
 		counter = counter + len(flow[3])
 
@@ -297,10 +304,10 @@ def joint_bandwidth_and_routing(network, job_assigned, job):
 
 		routing_bandwidth_solutions.append(flow)
 
-	print(routing_bandwidth_solutions)
-	print(trans_times)
+	# print(routing_bandwidth_solutions)
+	# print(trans_times)
 
-	print("the maximum trans_time is ", max(trans_times))
+	# print("the maximum trans_time is ", max(trans_times))
 
 	# calculate the JCT and throughput
 	sum_comp_time = 0
