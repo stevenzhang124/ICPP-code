@@ -45,11 +45,11 @@ def gen_application(noD):
 	app.nodes[8]['request_resource'] = 4
 	app.nodes[9]['request_resource'] = 0.5
 
-	pos = nx.spring_layout(app)
-	nx.draw(app, pos, with_labels=True)
+	# pos = nx.spring_layout(app)
+	# nx.draw(app, pos, with_labels=True)
 
-	edge_labels = nx.get_edge_attributes(app, 'weight')
-	nx.draw_networkx_edge_labels(app, pos, edge_labels = edge_labels)
+	# edge_labels = nx.get_edge_attributes(app, 'weight')
+	# nx.draw_networkx_edge_labels(app, pos, edge_labels = edge_labels)
 
 	# plt.show()
 

@@ -120,11 +120,11 @@ def gen_network(noD, var, B_avg, PS_avg):
 		print(node, G.nodes[node]['PS'], G.nodes[node]['max_resource'], G.nodes[node]['resource'])
 
 
-	pos = nx.spring_layout(G)
-	nx.draw(G, pos, with_labels=True)
+	# pos = nx.spring_layout(G)
+	# nx.draw(G, pos, with_labels=True)
 
-	edge_labels = nx.get_edge_attributes(G, 'weight')
-	nx.draw_networkx_edge_labels(G, pos, edge_labels = edge_labels)
+	# edge_labels = nx.get_edge_attributes(G, 'weight')
+	# nx.draw_networkx_edge_labels(G, pos, edge_labels = edge_labels)
 
 	# plt.show()
 
