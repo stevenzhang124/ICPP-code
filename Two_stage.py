@@ -8,6 +8,7 @@ this algorithm is used to sovle the joint resource allocation and bandwidth and 
 import networkx as nx
 from cvxopt import matrix, solvers
 import matplotlib.pyplot as plt
+import time
 
 
 def maximum_trans_and_comp_time (G, task, network, node, job_assigned):
@@ -48,6 +49,8 @@ def maximum_trans_and_comp_time (G, task, network, node, job_assigned):
 	comp = G.nodes[task]['CL'] / network.nodes[node]['PS']
 
 	return trans + comp
+
+def 
 
 
 def task_allocation(job, network):
@@ -100,7 +103,10 @@ def task_allocation(job, network):
 			# select those nodes with qualified resources first
 			if job.nodes[task]['request_resource'] >= network.nodes[node]['resource']:
 				continue
+			start = time.time()
 			trans_and_comp = maximum_trans_and_comp_time(job, task, network, node, job_assigned)
+			end = time.time()
+			print("Search max bandwidth and routing path consumes", start - end)
 			trans_and_comp_dict[node] = trans_and_comp
 
 		if trans_and_comp_dict:
