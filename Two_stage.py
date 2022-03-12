@@ -50,8 +50,6 @@ def maximum_trans_and_comp_time (G, task, network, node, job_assigned):
 
 	return trans + comp
 
-def 
-
 
 def task_allocation(job, network):
 	'''
