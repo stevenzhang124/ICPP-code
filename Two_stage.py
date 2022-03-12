@@ -101,10 +101,10 @@ def task_allocation(job, network):
 			# select those nodes with qualified resources first
 			if job.nodes[task]['request_resource'] >= network.nodes[node]['resource']:
 				continue
-			start = time.time()
+			# start = time.time()
 			trans_and_comp = maximum_trans_and_comp_time(job, task, network, node, job_assigned)
-			end = time.time()
-			print("Search max bandwidth and routing path consumes", start - end)
+			# end = time.time()
+			# print("Search max bandwidth and routing path consumes", start - end)
 			trans_and_comp_dict[node] = trans_and_comp
 
 		if trans_and_comp_dict:

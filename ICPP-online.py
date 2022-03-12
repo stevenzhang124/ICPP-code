@@ -151,7 +151,10 @@ for B_avg in bw_list:
 		Throughputs = []
 		start = time.time()
 		for (i, job) in enumerate(app_graphs):
+			st = time.time()
 			job_assigned = task_allocation(job, network)
+			et = time.time()
+			print("Assign tasks consume", st - et)
 			if job_assigned:
 				print("Job Assigned: ", job_assigned)
 				# network, job, job_assigned= test()
