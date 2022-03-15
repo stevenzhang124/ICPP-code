@@ -54,7 +54,10 @@ def gen_network(noD, var, B_avg, PS_avg):
 	Flag = True
 	while Flag:
 		G = nx.random_graphs.random_regular_graph(3, noD)
-		num_remove = math.ceil(noD*0.2)
+		if noD > 50:
+			num_remove = math.ceil(noD*0.4)
+		else:
+			num_remove = math.ceil(noD*0.35)
 		i = 0
 		nodes_list = list(G.nodes())
 		select_nodes = []
